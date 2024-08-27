@@ -41,5 +41,4 @@ public class ProductSpecifications {
         return (root, query, builder) ->
             inStock == null ? null : builder.greaterThan(root.get("quantity"), 0);
     }
-
 }
