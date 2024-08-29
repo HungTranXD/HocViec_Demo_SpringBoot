@@ -17,7 +17,7 @@ public class OrderResponse {
     private String shippingAddress;
     private String shippingPhone;
     private String paymentMethod;
-    private Double totalPrice;
+    private Double total;
     private String status;
     private String createdAt;
     private String updatedAt;

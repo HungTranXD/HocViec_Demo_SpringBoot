@@ -16,7 +16,7 @@ public class Product extends _BaseEntity {
     private double price;
     private int quantity;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "category_id")
     private Category category;
 }

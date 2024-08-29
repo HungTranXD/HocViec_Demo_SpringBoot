@@ -7,12 +7,13 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.repository.Query;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @MappedSuperclass
 @Getter
 @Setter
-public abstract class _BaseEntity {
+public abstract class _BaseEntity implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

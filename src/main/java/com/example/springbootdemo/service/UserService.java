@@ -1,6 +1,6 @@
 package com.example.springbootdemo.service;
 
-import com.example.springbootdemo.dto.NameOnly;
+import com.example.springbootdemo.dto.user.NameOnly;
 import com.example.springbootdemo.entity.User;
 
 import java.util.List;

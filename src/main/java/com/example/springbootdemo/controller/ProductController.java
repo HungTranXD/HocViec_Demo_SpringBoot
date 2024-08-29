@@ -1,6 +1,8 @@
 package com.example.springbootdemo.controller;
 
+import com.example.springbootdemo.dto.product.ProductCreateRequest;
 import com.example.springbootdemo.dto.product.ProductResponse;
+import com.example.springbootdemo.dto.product.ProductUpdateRequest;
 import com.example.springbootdemo.entity.Category;
 import com.example.springbootdemo.entity.Product;
 import com.example.springbootdemo.repository.specification.ProductSpecifications;
@@ -20,34 +22,83 @@ import java.util.List;
 public class ProductController {
     private final ProductService productService;
     private final CategoryService categoryService;
-    private final ModelMapper modelMapper;
-
-    @GetMapping
-    @ResponseStatus(HttpStatus.OK)
-    public List<ProductResponse> getProducts() {
-        return productService.findAll().stream()
-                .map(product -> modelMapper.map(product, ProductResponse.class))
-                .toList();
-    }
 
     @GetMapping("/filter")
     @ResponseStatus(HttpStatus.OK)
-    public List<Product> searchProducts(
+    public List<ProductResponse> searchProducts(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) List<Integer> categoryIds,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) Boolean inStock)
     {
-        Specification<Product> spec = Specification.where(ProductSpecifications.hasDeleted(false))
-                .and(ProductSpecifications.hasName(name))
-                .and(ProductSpecifications.hasCategoryIds(categoryIds))
-                .and(ProductSpecifications.hasPriceGreaterThan(minPrice))
-                .and(ProductSpecifications.hasPriceLessThan(maxPrice))
-                .and(ProductSpecifications.inStock(inStock));
-
-        return productService.findAllWithSpecifications(spec);
+        return productService.findAllWithSpecifications(name, categoryIds, minPrice, maxPrice, inStock);
     }
+
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public ProductResponse getProduct(@PathVariable Long id) {
+        return productService.findProductById(id);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProductResponse createProduct(@RequestBody ProductCreateRequest request) {
+        return productService.createProduct(request);
+    }
+
+    @PutMapping
+    @ResponseStatus(HttpStatus.OK)
+    public ProductResponse updateProduct(@RequestBody ProductUpdateRequest request) {
+        return productService.updateProduct(request);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteProduct(@PathVariable Long id) {
+        productService.deleteById(id);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     //I need to test CascadeType.PERSIST that I have placed in Product class
     @GetMapping("/test")

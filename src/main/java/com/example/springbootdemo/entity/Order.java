@@ -34,6 +34,7 @@ public class Order {
 
     @PrePersist
     public void onCreate() {
+        this.status = "PENDING";
         this.createdAt = LocalDateTime.now();
     }
 

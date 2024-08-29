@@ -9,6 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OrderDetailCreateRequest {
     private Long productId;
-    private Double buyPrice;
     private Integer buyQuantity;
 }

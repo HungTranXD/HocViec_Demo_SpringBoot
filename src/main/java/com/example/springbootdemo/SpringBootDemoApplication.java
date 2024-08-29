@@ -10,6 +10,7 @@ import org.hibernate.PersistentObjectException;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,7 +67,7 @@ public class SpringBootDemoApplication {
 //            productService.saveAll(products);
 //
 //            // Seed order:
-//            seedOrder(orderRepository, products);
+//            //seedOrder(orderRepository, products);
 //        };
 //    }
 

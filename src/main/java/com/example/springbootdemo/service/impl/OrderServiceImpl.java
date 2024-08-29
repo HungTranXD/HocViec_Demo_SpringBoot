@@ -10,21 +10,24 @@ import com.example.springbootdemo.entity.Product;
 import com.example.springbootdemo.repository.OrderRepository;
 import com.example.springbootdemo.repository.ProductRepository;
 import com.example.springbootdemo.service.OrderService;
-import jakarta.transaction.Transactional;
+import com.example.springbootdemo.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final ProductService productService;
     private final ModelMapper modelMapper;
 
     @Override
@@ -37,22 +40,24 @@ public class OrderServiceImpl implements OrderService {
                 (map, orderDetail) -> map.put(orderDetail.getProductId(), orderDetail),
                 HashMap::putAll
             );
-        List<Product> products = productRepository.findAllById(orderDetailMap.keySet());
+        List<Product> products = productRepository.findAllByIdWithLock(orderDetailMap.keySet());
 
         // -- 1.1: Check if product exists
         if (products.size() != orderDetailMap.size()) {
-            throw new RuntimeException("Product not found");
+            throw new RuntimeException("Product(s) not found");
         }
 
-        // -- 1.2: Check if product price and quantity are correct
-        for (Product product : products) {
-            OrderDetailCreateRequest orderDetail = orderDetailMap.get(product.getId());
-            if (product.getPrice() != orderDetail.getBuyPrice()) {
-                throw new RuntimeException("Product price is not correct");
-            }
-            if (product.getQuantity() < orderDetail.getBuyQuantity()) {
-                throw new RuntimeException("Product quantity is not enough");
-            }
+        // -- 1.2: Check if product quantity are correct
+        if (!products.stream().allMatch(product -> product.getQuantity() >= orderDetailMap.get(product.getId()).getBuyQuantity())) {
+            throw new RuntimeException("Product quantity is not enough");
+        }
+
+
+        // Simulate long process
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            log.error(e.getMessage());
         }
 
         // STEP 2: Create Order:
@@ -63,7 +68,7 @@ public class OrderServiceImpl implements OrderService {
         List<OrderDetail> orderDetails = products.stream()
             .map(product -> OrderDetail.builder()
                 .id(new OrderDetailId(order, product))
-                .buyPrice(orderDetailMap.get(product.getId()).getBuyPrice())
+                .buyPrice(product.getPrice())
                 .buyQuantity(orderDetailMap.get(product.getId()).getBuyQuantity())
                 .build()
             )
@@ -72,13 +77,12 @@ public class OrderServiceImpl implements OrderService {
 
         // -- 2.3: Update total
         order.setTotal(
-            request.getOrderDetails().stream()
-                .mapToDouble(OrderDetailCreateRequest::getBuyPrice)
+            orderDetails.stream()
+                .mapToDouble(orderDetail -> orderDetail.getBuyPrice() * orderDetail.getBuyQuantity())
                 .sum()
         );
 
         // -- 2.4: Save order
-        order.setStatus("PENDING");
         orderRepository.save(order);
 
         // STEP 3: Update product quantity:
@@ -87,6 +91,7 @@ public class OrderServiceImpl implements OrderService {
             product.setQuantity(product.getQuantity() - orderDetail.getBuyQuantity());
         }
         productRepository.saveAll(products);
+        products.forEach(product -> productService.evictCache(product.getId()));
 
         // STEP 4: Return OrderResponse:
         return modelMapper.map(order, OrderResponse.class);
